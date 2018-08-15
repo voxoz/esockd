@@ -26,6 +26,7 @@
 %%%-----------------------------------------------------------------------------
 
 -module(esockd_acceptor).
+-compile({parse_transform, lager_transform}).
 
 -author("Feng Lee <feng@emqtt.io>").
 
@@ -44,7 +45,7 @@
                 sockname    :: iolist(),
                 conn_sup    :: pid(),
                 statsfun    :: fun(),
-                logger      :: gen_logger:logmod(),
+                logger      :: [],
                 ref         :: reference(),
                 emfile_count = 0}).
 
@@ -53,7 +54,7 @@
       ConnSup        :: pid(),
       AcceptStatsFun :: fun(),
       BufferTuneFun  :: esockd:tune_fun(),
-      Logger         :: gen_logger:logmod(),
+      Logger         :: [],
       LSock          :: inet:socket(),
       SockFun        :: esockd:sock_fun()).
 start_link(ConnSup, AcceptStatsFun, BufTuneFun, Logger, LSock, SockFun) ->
@@ -101,19 +102,19 @@ handle_info({inet_async, LSock, Ref, {ok, Sock}}, State = #state{lsock    = LSoc
 
     %% Fix issues#9: enotconn error occured...
 	%% {ok, Peername} = inet:peername(Sock),
-    %% Logger:info("~s - Accept from ~s", [SockName, esockd_net:format(peername, Peername)]),
+    %% lager:info("~s - Accept from ~s", [SockName, esockd_net:format(peername, Peername)]),
     case BufferTuneFun(Sock) of
         ok ->
             case esockd_connection_sup:start_connection(ConnSup, Mod, Sock, SockFun) of
                 {ok, _Pid}        -> ok;
                 {error, enotconn} -> catch port_close(Sock); %% quiet...issue #10
                 {error, Reason}   -> catch port_close(Sock),
-                                     Logger:error("Failed to start connection on ~s - ~p", [SockName, Reason])
+                                     lager:error("Failed to start connection on ~s - ~p", [SockName, Reason])
             end;
         {error, enotconn} ->
 			catch port_close(Sock);
         {error, Err} ->
-            Logger:error("failed to tune buffer size of connection accepted on ~s - ~s", [SockName, Err]),
+            lager:error("failed to tune buffer size of connection accepted on ~s - ~s", [SockName, Err]),
             catch port_close(Sock)
     end,
     %% accept more
@@ -173,18 +174,18 @@ accept(State = #state{lsock = LSock}) ->
 sockerr(emfile, State = #state{sockname = SockName, emfile_count = Count, logger = Logger}) ->
 	%%avoid too many error log.. stupid??
 	case Count rem 100 of 
-        0 -> Logger:error("acceptor on ~s suspend 100(ms) for ~p emfile errors!!!", [SockName, Count]);
+        0 -> lager:error("acceptor on ~s suspend 100(ms) for ~p emfile errors!!!", [SockName, Count]);
         _ -> ignore
 	end,
 	suspend(100, State#state{emfile_count = Count+1});
 
 %% enfile: The system limit on the total number of open files has been reached. usually OS's limit.
 sockerr(enfile, State = #state{sockname = SockName, logger = Logger}) ->
-	Logger:error("accept error on ~s - !!!enfile!!!", [SockName]),
+	lager:error("accept error on ~s - !!!enfile!!!", [SockName]),
 	suspend(100, State);
 
 sockerr(Error, State = #state{sockname = SockName, logger = Logger}) ->
-	Logger:error("accept error on ~s - ~s", [SockName, Error]),
+	lager:error("accept error on ~s - ~s", [SockName, Error]),
 	{stop, {accept_error, Error}, State}.
 
 %%--------------------------------------------------------------------

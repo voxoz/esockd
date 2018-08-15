@@ -27,6 +27,7 @@
 %%%-----------------------------------------------------------------------------
 
 -module(esockd_connection_sup).
+-compile({parse_transform,pmod_pt}).
 
 -behaviour(gen_server).
 
@@ -79,10 +80,10 @@ start_link(Options, MFArgs, Logger) ->
 %% @doc Start connection.
 start_connection(Sup, Mod, Sock, SockFun) ->
     case call(Sup, {start_connection, Sock, SockFun}) of
-        {ok, Pid, Conn} ->
+        {ok, Pid, {Conn,Args}} ->
             % transfer controlling from acceptor to connection
             Mod:controlling_process(Sock, Pid),
-            Conn:go(Pid),
+            Conn:go(Pid, {Conn,Args}),
             {ok, Pid};
         {error, Error} ->
             {error, Error}
@@ -142,11 +143,11 @@ handle_call({start_connection, Sock, SockFun}, _From,
         {ok, {Addr, _Port}} ->
             case allowed(Addr, Rules) of
                 true ->
-                    Conn = esockd_connection:new(Sock, SockFun, ConnOpts),
-                    case catch Conn:start_link(MFArgs) of
+                    {Conn,Args} = esockd_connection:new(Sock, SockFun, ConnOpts),
+                    case catch Conn:start_link(MFArgs,{Conn,Args}) of
                         {ok, Pid} when is_pid(Pid) ->
                             put(Pid, true),
-                            {reply, {ok, Pid, Conn}, State#state{curr_clients = Count+1}};
+                            {reply, {ok, Pid, {Conn,Args}}, State#state{curr_clients = Count+1}};
                         ignore ->
                             {reply, ignore, State};
                         {error, Reason} ->

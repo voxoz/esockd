@@ -7,7 +7,7 @@
   {applications, [
                   kernel,
                   stdlib,
-                  gen_logger
+                  lager
                  ]},
   {mod, {esockd_app, []}},
   {env, [{logger, {error_logger, info}}]},
