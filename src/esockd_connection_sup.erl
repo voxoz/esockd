@@ -27,7 +27,6 @@
 %%%-----------------------------------------------------------------------------
 
 -module(esockd_connection_sup).
--compile({parse_transform,pmod_pt}).
 
 -behaviour(gen_server).
 
