@@ -108,12 +108,12 @@ handle_info({inet_async, LSock, Ref, {ok, Sock}}, State = #state{lsock    = LSoc
                 {ok, _Pid}        -> ok;
                 {error, enotconn} -> catch port_close(Sock); %% quiet...issue #10
                 {error, Reason}   -> catch port_close(Sock),
-                                     Logger:error("Failed to start connection on ~s - ~p", [SockName, Reason])
+                                     {M,_,_} = Logger, M:error("Failed to start connection on ~s - ~p", [SockName, Reason], Logger)
             end;
         {error, enotconn} ->
 			catch port_close(Sock);
         {error, Err} ->
-            Logger:error("failed to tune buffer size of connection accepted on ~s - ~s", [SockName, Err]),
+            {M,_,_} = Logger, M:error("failed to tune buffer size of connection accepted on ~s - ~s", [SockName, Err], Logger),
             catch port_close(Sock)
     end,
     %% accept more
@@ -173,18 +173,18 @@ accept(State = #state{lsock = LSock}) ->
 sockerr(emfile, State = #state{sockname = SockName, emfile_count = Count, logger = Logger}) ->
 	%%avoid too many error log.. stupid??
 	case Count rem 100 of 
-        0 -> Logger:error("acceptor on ~s suspend 100(ms) for ~p emfile errors!!!", [SockName, Count]);
+        0 -> {M,_,_} = Logger, M:error("acceptor on ~s suspend 100(ms) for ~p emfile errors!!!", [SockName, Count], Logger);
         _ -> ignore
 	end,
 	suspend(100, State#state{emfile_count = Count+1});
 
 %% enfile: The system limit on the total number of open files has been reached. usually OS's limit.
 sockerr(enfile, State = #state{sockname = SockName, logger = Logger}) ->
-	Logger:error("accept error on ~s - !!!enfile!!!", [SockName]),
+	{M,_,_} = Logger, M:error("accept error on ~s - !!!enfile!!!", [SockName], Logger),
 	suspend(100, State);
 
 sockerr(Error, State = #state{sockname = SockName, logger = Logger}) ->
-	Logger:error("accept error on ~s - ~s", [SockName, Error]),
+	{M,_,_} = Logger, M:error("accept error on ~s - ~s", [SockName, Error], Logger),
 	{stop, {accept_error, Error}, State}.
 
 %%--------------------------------------------------------------------

@@ -145,8 +145,8 @@ erase_peer(Peer, State = #state{peers = Peers}) ->
 noreply(State) -> {noreply, State, hibernate}.
 
 log_error(Logger, Peer, Reason) ->
-    Logger:error("Failed to start client for udp ~s, reason: ~p",
-                 [esockd_net:format(Peer), Reason]).
+    {M,_,_} = Logger, M:error("Failed to start client for udp ~s, reason: ~p",
+                 [esockd_net:format(Peer), Reason], Logger).
 
 -ifdef(TEST).
 

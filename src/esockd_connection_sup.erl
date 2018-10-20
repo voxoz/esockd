@@ -79,10 +79,10 @@ start_link(Options, MFArgs, Logger) ->
 %% @doc Start connection.
 start_connection(Sup, Mod, Sock, SockFun) ->
     case call(Sup, {start_connection, Sock, SockFun}) of
-        {ok, Pid, Conn} ->
+        {ok, Pid, {C,_} = Conn} ->
             % transfer controlling from acceptor to connection
             Mod:controlling_process(Sock, Pid),
-            Conn:go(Pid),
+            C:go(Pid, Conn),
             {ok, Pid};
         {error, Error} ->
             {error, Error}
@@ -143,7 +143,8 @@ handle_call({start_connection, Sock, SockFun}, _From,
             case allowed(Addr, Rules) of
                 true ->
                     Conn = esockd_connection:new(Sock, SockFun, ConnOpts),
-                    case catch Conn:start_link(MFArgs) of
+                    {C,_} = Conn,
+                    case catch C:start_link(MFArgs, Conn) of
                         {ok, Pid} when is_pid(Pid) ->
                             put(Pid, true),
                             {reply, {ok, Pid, Conn}, State#state{curr_clients = Count+1}};
@@ -193,7 +194,7 @@ handle_call(_Req, _From, State) ->
     {stop, {error, badreq}, State}.
 
 handle_cast(Msg, State = #state{logger = Logger}) ->
-    Logger:error("Bad MSG: ~p", [Msg]),
+    {M,_,_} = Logger, M:error("Bad MSG: ~p", [Msg], Logger),
     {noreply, State}.
 
 handle_info({'EXIT', Pid, Reason}, State = #state{curr_clients = Count, logger = Logger}) ->
@@ -202,12 +203,12 @@ handle_info({'EXIT', Pid, Reason}, State = #state{curr_clients = Count, logger =
             connection_crashed(Pid, Reason, State),
             {noreply, State#state{curr_clients = Count-1}};
         undefined ->
-            Logger:error("'EXIT' from unkown ~p: ~p", [Pid, Reason]),
+            {M,_,_} = Logger, M:error("'EXIT' from unkown ~p: ~p", [Pid, Reason], Logger),
             {noreply, State}
     end;
 
 handle_info(Info, State = #state{logger = Logger}) ->
-    Logger:error("Bad INFO: ~p", [Info]),
+    {M,_,_} = Logger, M:error("Bad INFO: ~p", [Info], Logger),
     {noreply, State}.
 
 terminate(_Reason, State) ->
