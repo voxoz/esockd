@@ -8,6 +8,3 @@
 * Maxim Sokhatsky <maxim@synrc.com> (Maintainer)
 
 OM A HUM
-
-
-
