@@ -1,17 +1,13 @@
+# ESOCKD: Non-blocking TCP/SSL Server
 
-# eSockd [![Build Status](https://travis-ci.org/emqtt/esockd.svg?branch=3.0)](https://travis-ci.org/emqtt/esockd)
+[![Build Status](https://travis-ci.org/voxoz/esockd.svg?branch=3.0)](https://travis-ci.org/voxoz/esockd)
 
-Erlang General Non-blocking TCP/SSL Socket Server.
+## Credits
 
-## Docs
+* Feng Lee <feng@emqtt.io> (Author)
+* Maxim Sokhatsky <maxim@synrc.com> (Maintainer)
 
-[eSockd Documentation](docs/index.rst)
+OM A HUM
 
-## License
 
-The MIT License (MIT)
-
-## Author
-
-Feng Lee <feng@emqtt.io>
 
