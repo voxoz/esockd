@@ -1,17 +1,13 @@
 {application, esockd, [
   {id, "esockd"},
   {vsn, "4.1.1"},
-  {description, "Erlang General Non-blocking TCP/SSL Server"},
+  {description, "ESOCKD Non-blocking TCP/SSL Server"},
   {modules, []},
   {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib,
-                  gen_logger
-                 ]},
+  {applications, [kernel,stdlib,gen_logger]},
   {mod, {esockd_app, []}},
   {env, [{logger, {error_logger, info}}]},
-  {maintainers, ["Feng Lee <feng@emqtt.io>"]},
+  {maintainers, ["Maxim Sokhatsky <maxim@synrc.com>"]},
   {licenses, ["MIT"]},
-  {links, [{"Github", "https://github.com/emqtt/esockd"}]}
+  {links, [{"Github", "https://github.com/voxoz/esockd"}]}
 ]}.
